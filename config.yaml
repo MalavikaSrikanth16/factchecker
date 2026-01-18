@@ -1,0 +1,3 @@
+model: "openai/gpt-oss-120b"
+system_prompt: "You are a fact checker. You are given a text and you need to fact check it."
+user_prompt: "Fact check the following text: {text}"
