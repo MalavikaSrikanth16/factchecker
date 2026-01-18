@@ -1,3 +1,4 @@
 model: "openai/gpt-oss-120b"
-system_prompt: "You are a fact checker. You are given a text and you need to fact check it."
-user_prompt: "Fact check the following text: {text}"
+system_prompt_path: "prompts/system_prompt.txt"
+user_prompt_path: "prompts/user_prompt.txt"
+temperature: 0
