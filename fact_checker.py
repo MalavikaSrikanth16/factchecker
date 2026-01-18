@@ -3,19 +3,11 @@ import yaml
 from huggingface_hub import InferenceClient
 
 class FactChecker:
-    """
-    A class to fact-check text using an LLM model with system and user prompts.
-    """
-    
     def __init__(self, config_path="config.yaml"):
         """
-        Initialize the FactChecker with an LLM model and prompts.
-        Can load from config file or accept parameters directly.
+        Initialize the FactChecker from a config file.
         
         Args:
-            model (str, optional): The model name/identifier. If None, loads from config.
-            system_prompt (str, optional): The system prompt. If None, loads from config.
-            user_prompt (str, optional): The user prompt template. If None, loads from config.
             config_path (str): Path to the config YAML file. Defaults to "config.yaml".
         """
         config = self._load_config(config_path)
