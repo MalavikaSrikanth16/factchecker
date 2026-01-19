@@ -2,3 +2,4 @@ model: "openai/gpt-oss-120b"
 system_prompt_path: "prompts/system_prompt.txt"
 user_prompt_path: "prompts/user_prompt.txt"
 temperature: 0
+wiki_agentic_rag: true
