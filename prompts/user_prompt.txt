@@ -1,7 +1,9 @@
 Fact check the following text:
 {text}
 
-Return your response in the following format
+Return your response as a JSON object. Wrap the JSON output in <response></response> tags.
+
+Output format : 
 <response>{
     "is_fact_true": is_fact_true,
     "reasoning": reasoning
