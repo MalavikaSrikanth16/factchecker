@@ -175,11 +175,20 @@ class FactChecker:
         
         # Fallback: try to parse the response directly as JSON assuming no <response> tags are present
         try:
-            json_data = json.loads(llm_response.strip())
-            return {
-                "is_fact_true": json_data.get("is_fact_true"),
-                "reasoning": json_data.get("reasoning")
-            }
+            if isinstance(llm_response, str):
+                json_data = json.loads(llm_response.strip())
+                return {
+                    "is_fact_true": json_data.get("is_fact_true"),
+                    "reasoning": json_data.get("reasoning")
+                }
+            elif isinstance(llm_response, dict):
+                return {
+                    "is_fact_true": llm_response.get("is_fact_true"),
+                    "reasoning": llm_response.get("reasoning")
+                }
+            else:
+                logger.error(f"Unsupported response type: {type(llm_response)}")
         except Exception as e:
             logger.error(f"Error parsing response: {e}. Returning raw response: {llm_response}")
-            return None
+        
+        return None

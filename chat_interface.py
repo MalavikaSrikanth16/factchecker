@@ -1,6 +1,8 @@
 import streamlit as st
 import logging
 from fact_checker import FactChecker
+from huggingface_hub import login
+import os
 
 # Setup logging
 logging.basicConfig(
@@ -8,6 +10,21 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+#Hugging face authentication for inference client
+try:
+    hf_token = st.secrets["HF_TOKEN"]
+except KeyError:
+    hf_token = os.getenv("HF_TOKEN")
+    if not hf_token:
+        logger.warning("HF_TOKEN is missing from secrets.toml and environment variables!")
+        hf_token = None
+
+if hf_token:
+    login(token=hf_token)
+    logger.info("Logged in to Hugging Face Hub!")
+else:
+    logger.warning("Hugging Face token not found in secrets.")
 
 # Set page configuration
 st.set_page_config(layout="wide", page_title="Fact Check App")
