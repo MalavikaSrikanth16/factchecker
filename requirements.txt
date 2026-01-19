@@ -2,3 +2,4 @@ streamlit
 pyyaml
 huggingface-hub
 smolagents
+wikipedia-api
