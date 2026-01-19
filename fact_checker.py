@@ -139,5 +139,5 @@ class FactChecker:
             return result
         except Exception as e:
             print(f"Error parsing response: {e}")
-            return llm_response
+            return None
 
