@@ -2,7 +2,7 @@ Fact check the following text:
 {text}
 
 Return your response in the following format
-<response>{{
+<response>{
     "is_fact_true": is_fact_true,
     "reasoning": reasoning
-}}</response>
+}</response>

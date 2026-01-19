@@ -68,7 +68,7 @@ class FactChecker:
                   or None if parsing fails
         """
         # Format the user prompt template with the text to check
-        formatted_user_prompt = self.user_prompt.format(text=text_to_check)
+        formatted_user_prompt = self.user_prompt.replace("{text}", text_to_check)
         
         # Call the LLM with system and user prompts
         llm_response = self._call_llm(formatted_user_prompt)
