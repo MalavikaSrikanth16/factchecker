@@ -1,8 +1,7 @@
-import os
-import yaml
 import json
-import re
 import logging
+import re
+import yaml
 from huggingface_hub import InferenceClient
 from smolagents import CodeAgent, InferenceClientModel, WikipediaSearchTool
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -26,10 +25,18 @@ class FactChecker:
             self.deployment_type = "inference_client"
         self.model = config.get("model", "openai/gpt-oss-120b")
         self.temperature = config.get("temperature", 0)
-        self.system_prompt = self._load_prompt_template(config.get("system_prompt_path", "prompts/system_prompt.txt"))
-        self.user_prompt = self._load_prompt_template(config.get("user_prompt_path", "prompts/user_prompt.txt"))
+        self.system_prompt = self._load_prompt_template(
+            config.get("system_prompt_path", "prompts/system_prompt.txt")
+        )
+        self.user_prompt = self._load_prompt_template(
+            config.get("user_prompt_path", "prompts/user_prompt.txt")
+        )
 
-        # Initialize model and tokenizer if local deployment type.
+        self._initialize_model_components()
+
+    def _initialize_model_components(self):
+        """Initialize model, client, and agent components based on deployment type."""
+        # Initialize model and tokenizer if local deployment type
         self.loaded_tokenizer = None
         self.loaded_model = None
         if self.deployment_type == "local":
@@ -37,21 +44,26 @@ class FactChecker:
             self.loaded_tokenizer = AutoTokenizer.from_pretrained(self.model)
             self.loaded_model = AutoModelForCausalLM.from_pretrained(self.model)
 
-        #Initialize InferenceClient if inference client deployment type and not wiki_agentic_rag
+        # Initialize InferenceClient if inference client deployment type and not wiki_agentic_rag
         self.client = None
         if not self.wiki_agentic_rag and self.deployment_type == "inference_client":
+            logger.info(f"Initializing InferenceClient with model: {self.model}")
             self.client = InferenceClient(self.model)
-        
+
         # Initialize agent with Wikipedia search tool if wiki_agentic_rag is enabled
         self.agent = None
         if self.wiki_agentic_rag:
+            logger.info(f"Initializing CodeAgent with Wikipedia search tool")
             wiki_tool = WikipediaSearchTool(
                 user_agent="FactChecker/1.0 (fact-checking-tool)",
                 language="en",
                 content_type="text",
                 extract_format="WIKI"
             )
-            agent_model = InferenceClientModel(model_id=self.model, temperature=self.temperature)
+            agent_model = InferenceClientModel(
+                model_id=self.model,
+                temperature=self.temperature
+            )
             self.agent = CodeAgent(tools=[wiki_tool], model=agent_model)
 
     @staticmethod
@@ -63,13 +75,13 @@ class FactChecker:
             prompt_path (str): Path to the prompt template file.
             
         Returns:
-            str: The prompt template string, or empty string if file not found.
+            str: The prompt template string (default prompt string is returned if file not found).
         """
         try:
             with open(prompt_path, 'r') as f:
                 return f.read().strip()
         except Exception as e:
-            #Fallback to default prompt
+            # Fallback to default prompt
             logger.warning(f"Error loading prompt template from {prompt_path}: {e}")
             return "Fact check the following text: {text}. Return JSON output with keys 'is_fact_true' and 'reasoning'"
     
@@ -102,46 +114,49 @@ class FactChecker:
             text_to_check (str): The text that needs to be fact-checked
             
         Returns:
-            dict or str: Dictionary containing 'is_fact_true' and 'reasoning' keys if parsing succeeds,
+            dict or str: Dictionary containing 'is_fact_true' and 'reasoning' keys,
                         or None if no suitable result is obtained
         """
         # Format the user prompt template with the text to check
         formatted_user_prompt = self.user_prompt.replace("{text}", text_to_check)
-        
-        # Call CodeAgent if wiki_agentic_rag is enabled else call the LLM model
-        llm_response = self._call_llm_with_agentic_rag(formatted_user_prompt) if self.wiki_agentic_rag and self.agent else self._call_llm(formatted_user_prompt)
-        
+
+        # Call CodeAgent if wiki_agentic_rag is enabled, else call the LLM model
+        if self.wiki_agentic_rag and self.agent:
+            llm_response = self._call_llm_with_agentic_rag(formatted_user_prompt)
+        else:
+            llm_response = self._call_llm(formatted_user_prompt)
+
         # Parse and return the response
         return self._parse_response(llm_response)
 
     def _call_llm_hf_inference_client(self, messages):
         """
-        Make the actual LLM API call with system and user prompts using Hugging Face InferenceClient.
+        Calls the LLM using Hugging Face InferenceClient.
         
         Args:
             messages (list): The list of messages to be sent to the LLM
             
         Returns:
-            str: The LLM response or None if the API call fails
+            str: The LLM response or None if there is an error.
         """
-        logger.info(f"Calling HF InferenceClient LLM model: {self.model} with messages: {messages}")
+        logger.info(f"Calling HF InferenceClient LLM: {self.model} with messages: {messages}")
         completion = self.client.chat.completions.create(
             messages=messages,
             temperature=self.temperature,
         )
         response = completion.choices[0].message.content
-        logger.info(f"HF InferenceClient LLM response: {response}")
+        logger.info(f"LLM response: {response}")
         return response
 
     def _call_llm_hf_locally_hosted_model(self, messages):
         """
-        Make the actual LLM API call with system and user prompts using locally hosted model.
+        Calls the locally hosted LLM model.
         
         Args:
             messages (list): The list of messages to be sent to the LLM
             
         Returns:
-            str: The LLM response or None if the API call fails
+            str: The LLM response or None if there is an error.
         """
         logger.info(f"Calling locally hosted LLM model: {self.model} with messages: {messages}")
         inputs = self.loaded_tokenizer.apply_chat_template(
@@ -152,20 +167,22 @@ class FactChecker:
             return_tensors="pt",
         ).to(self.loaded_model.device)
         outputs = self.loaded_model.generate(**inputs, max_new_tokens=512)
-        response = self.loaded_tokenizer.decode(outputs[0][inputs['input_ids'].shape[-1]:])
+        response = self.loaded_tokenizer.decode(
+            outputs[0][inputs['input_ids'].shape[-1]:]
+        )
         logger.info(f"LLM response: {response}")
         return response
-        
+
     def _call_llm(self, formatted_user_prompt):
         """
-        Make the actual LLM API call with system and user prompts.
+        Make the LLM model call with system and user prompts.
         Calls either inference client or locally hosted model based on deployment_type.
         
         Args:
             formatted_user_prompt (str): The formatted user prompt
             
         Returns:
-            str: The LLM response or None if the API call fails
+            str: The LLM response or None if there is an error
         """
         try:
             messages = [
@@ -189,7 +206,7 @@ class FactChecker:
     
     def _call_llm_with_agentic_rag(self, formatted_user_prompt):
         """
-        Use agentic RAG via CodeAgent.
+        Calls the CodeAgent with agentic RAG with system and user prompts.
         The agent will use Wikipedia search tool if needed.
         
         Args:
@@ -200,24 +217,24 @@ class FactChecker:
         """
         try:
             prompt = f"{self.system_prompt}\n\n{formatted_user_prompt}"
-            logger.info(f"Calling CodeAgent with prompt: {prompt}")        
+            logger.info(f"Calling CodeAgent with prompt: {prompt}")
             response = self.agent.run(prompt)
             logger.info(f"CodeAgent response: {response}")
             return response
         except Exception as e:
             logger.error(f"Error in _call_llm_with_agentic_rag: {e}")
             return None
-    
+
     def _parse_response(self, llm_response):
         """
-        Parse and process the LLM response to extract dict with keys 'is_fact_true' and 'reasoning'.
+        Parse the LLM response to extract dict with keys 'is_fact_true' and 'reasoning'.
         
         Args:
-            llm_response: The raw response from the LLM or CodeAgent
-            
+            llm_response: The response from the LLM or CodeAgent
+
         Returns:
-            dict or str: Dictionary containing 'is_fact_true' and 'reasoning' keys if parsing succeeds,
-                        or None if no suitable result is obtained
+            dict or None: Dictionary containing 'is_fact_true' and 'reasoning' keys if parsing succeeds,
+                         or None if no suitable result is obtained
         """
         # First try to parse assuming <response> tags are present
         try:
@@ -230,7 +247,7 @@ class FactChecker:
             }
         except Exception as e:
             logger.warning(f"Failed to parse with <response> tags: {e}")
-        
+
         # Fallback: try to parse the response assuming no <response> tags are present
         try:
             if isinstance(llm_response, str):
@@ -248,5 +265,5 @@ class FactChecker:
                 logger.error(f"Unsupported response type: {type(llm_response)}")
         except Exception as e:
             logger.error(f"Error parsing response: {e}. Returning raw response: {llm_response}")
-        
+
         return None
