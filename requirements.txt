@@ -4,3 +4,4 @@ huggingface-hub
 smolagents
 wikipedia-api
 transformers
+torch

@@ -5,6 +5,8 @@ import yaml
 from huggingface_hub import InferenceClient
 from smolagents import CodeAgent, InferenceClientModel, WikipediaSearchTool
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from IzzyViz.izzyviz import visualize_attention_self_attention
+import torch 
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +33,7 @@ class FactChecker:
         self.user_prompt = self._load_prompt_template(
             config.get("user_prompt_path", "prompts/user_prompt.txt")
         )
+        self.izzyviz = config.get("izzyviz", False)
 
         self._initialize_model_components()
 
@@ -171,6 +174,31 @@ class FactChecker:
             outputs[0][inputs['input_ids'].shape[-1]:]
         )
         logger.info(f"LLM response: {response}")
+        if self.izzyviz:
+            try:
+                input_and_response = self.loaded_tokenizer.decode(outputs[0])
+                inputs = self.loaded_tokenizer(input_and_response, return_tensors="pt", add_special_tokens=True)
+                tokens = self.loaded_tokenizer.convert_ids_to_tokens(inputs['input_ids'][0])
+
+                self.loaded_model.set_attn_implementation('eager')
+                with torch.no_grad():
+                    outputs = self.loaded_model(**inputs, output_attentions=True)
+                    attentions = outputs.attentions
+
+                visualize_attention_self_attention(
+                    attentions=attentions,
+                    tokens=tokens,
+                    layer=-1,
+                    head=0,
+                    top_n=5,
+                    mode='self_attention',
+                    plot_titles=["Fact Checking Self-Attention Heatmap"],
+                    save_path="attention_heat_maps/fact_check_attention_heatmap.png"
+                )
+                logger.info("Full self-attention heatmap (input+response) saved to fact_check_attention_heatmap.png")
+            except Exception as e:
+                logger.error(f"Error generating full attention heatmap: {e}")
+
         return response
 
     def _call_llm(self, formatted_user_prompt):

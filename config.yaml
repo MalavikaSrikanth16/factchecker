@@ -1,5 +1,5 @@
 # deployment_type: "local" to use locally hosted model, "inference_client" to use Hugging Face InferenceClient
-deployment_type: "inference_client"
+deployment_type: "local"
 
 # Model name 
 # For inference_client: you can use larger models available on HF Inference API (Tested with "openai/gpt-oss-120b")
@@ -13,3 +13,5 @@ temperature: 0
 
 # wiki_agentic_rag: if true, requires deployment_type to be "inference_client"
 wiki_agentic_rag: true
+# izzyviz will only run if deployment_type is "local"
+izzyviz: false
