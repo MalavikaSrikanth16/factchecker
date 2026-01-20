@@ -5,6 +5,7 @@ import re
 import logging
 from huggingface_hub import InferenceClient
 from smolagents import CodeAgent, InferenceClientModel, WikipediaSearchTool
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 logger = logging.getLogger(__name__)
 
@@ -17,11 +18,29 @@ class FactChecker:
             config_path (str): Path to the config YAML file. Defaults to "config.yaml".
         """
         config = self._load_config(config_path)
+        self.wiki_agentic_rag = config.get("wiki_agentic_rag", False)
+        self.deployment_type = config.get("deployment_type", "inference_client")
+        # If wiki_agentic_rag is enabled, deployment_type must be "inference_client" 
+        if self.wiki_agentic_rag and self.deployment_type != "inference_client":
+            logger.warning(f"wiki_agentic_rag is enabled but deployment_type is '{self.deployment_type}'. Forcing deployment_type to 'inference_client'.")
+            self.deployment_type = "inference_client"
         self.model = config.get("model", "openai/gpt-oss-120b")
         self.temperature = config.get("temperature", 0)
-        self.wiki_agentic_rag = config.get("wiki_agentic_rag", False)
         self.system_prompt = self._load_prompt_template(config.get("system_prompt_path", "prompts/system_prompt.txt"))
         self.user_prompt = self._load_prompt_template(config.get("user_prompt_path", "prompts/user_prompt.txt"))
+
+        # Initialize model and tokenizer if local deployment type.
+        self.loaded_tokenizer = None
+        self.loaded_model = None
+        if self.deployment_type == "local":
+            logger.info(f"Loading local model: {self.model} (this may take a moment...)")
+            self.loaded_tokenizer = AutoTokenizer.from_pretrained(self.model)
+            self.loaded_model = AutoModelForCausalLM.from_pretrained(self.model)
+
+        #Initialize InferenceClient if inference client deployment type and not wiki_agentic_rag
+        self.client = None
+        if not self.wiki_agentic_rag and self.deployment_type == "inference_client":
+            self.client = InferenceClient(self.model)
         
         # Initialize agent with Wikipedia search tool if wiki_agentic_rag is enabled
         self.agent = None
@@ -50,6 +69,7 @@ class FactChecker:
             with open(prompt_path, 'r') as f:
                 return f.read().strip()
         except Exception as e:
+            #Fallback to default prompt
             logger.warning(f"Error loading prompt template from {prompt_path}: {e}")
             return "Fact check the following text: {text}. Return JSON output with keys 'is_fact_true' and 'reasoning'"
     
@@ -93,10 +113,53 @@ class FactChecker:
         
         # Parse and return the response
         return self._parse_response(llm_response)
-    
+
+    def _call_llm_hf_inference_client(self, messages):
+        """
+        Make the actual LLM API call with system and user prompts using Hugging Face InferenceClient.
+        
+        Args:
+            messages (list): The list of messages to be sent to the LLM
+            
+        Returns:
+            str: The LLM response or None if the API call fails
+        """
+        logger.info(f"Calling HF InferenceClient LLM model: {self.model} with messages: {messages}")
+        completion = self.client.chat.completions.create(
+            messages=messages,
+            temperature=self.temperature,
+        )
+        response = completion.choices[0].message.content
+        logger.info(f"HF InferenceClient LLM response: {response}")
+        return response
+
+    def _call_llm_hf_locally_hosted_model(self, messages):
+        """
+        Make the actual LLM API call with system and user prompts using locally hosted model.
+        
+        Args:
+            messages (list): The list of messages to be sent to the LLM
+            
+        Returns:
+            str: The LLM response or None if the API call fails
+        """
+        logger.info(f"Calling locally hosted LLM model: {self.model} with messages: {messages}")
+        inputs = self.loaded_tokenizer.apply_chat_template(
+            messages,
+            add_generation_prompt=True,
+            tokenize=True,
+            return_dict=True,
+            return_tensors="pt",
+        ).to(self.loaded_model.device)
+        outputs = self.loaded_model.generate(**inputs, max_new_tokens=512)
+        response = self.loaded_tokenizer.decode(outputs[0][inputs['input_ids'].shape[-1]:])
+        logger.info(f"LLM response: {response}")
+        return response
+        
     def _call_llm(self, formatted_user_prompt):
         """
         Make the actual LLM API call with system and user prompts.
+        Calls either inference client or locally hosted model based on deployment_type.
         
         Args:
             formatted_user_prompt (str): The formatted user prompt
@@ -105,7 +168,6 @@ class FactChecker:
             str: The LLM response or None if the API call fails
         """
         try:
-            client = InferenceClient()
             messages = [
                 {
                     "role": "system",
@@ -116,14 +178,11 @@ class FactChecker:
                     "content": formatted_user_prompt
                 }]
 
-            logger.info(f"Calling LLM model: {self.model} with messages: {messages}")
-            completion = client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=self.temperature,
-            )
-            logger.info(f"LLM response: {completion.choices[0].message.content}")
-            return completion.choices[0].message.content
+            # Route to appropriate method based on deployment type
+            if self.deployment_type == "local":
+                return self._call_llm_hf_locally_hosted_model(messages)
+            else:
+                return self._call_llm_hf_inference_client(messages)
         except Exception as e:
             logger.error(f"Error in _call_llm: {e}")
             return None
@@ -163,17 +222,16 @@ class FactChecker:
         # First try to parse assuming <response> tags are present
         try:
             match = re.search(r'<response>(.*?)</response>', llm_response, re.DOTALL)
-            if match:
-                json_str = match.group(1).strip()
-                json_data = json.loads(json_str)
-                return {
-                    "is_fact_true": json_data.get("is_fact_true"),
-                    "reasoning": json_data.get("reasoning")
-                }
+            json_str = match.group(1).strip()
+            json_data = json.loads(json_str)
+            return {
+                "is_fact_true": json_data.get("is_fact_true"),
+                "reasoning": json_data.get("reasoning")
+            }
         except Exception as e:
             logger.warning(f"Failed to parse with <response> tags: {e}")
         
-        # Fallback: try to parse the response directly as JSON assuming no <response> tags are present
+        # Fallback: try to parse the response assuming no <response> tags are present
         try:
             if isinstance(llm_response, str):
                 json_data = json.loads(llm_response.strip())

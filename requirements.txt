@@ -3,3 +3,4 @@ pyyaml
 huggingface-hub
 smolagents
 wikipedia-api
+transformers
