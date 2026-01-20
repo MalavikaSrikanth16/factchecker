@@ -1,5 +1,5 @@
 # deployment_type: "local" to use locally hosted model, "inference_client" to use Hugging Face InferenceClient
-deployment_type: "local"
+deployment_type: "inference_client"
 
 # Model name 
 # For inference_client: you can use larger models available on HF Inference API (Tested with "openai/gpt-oss-120b")

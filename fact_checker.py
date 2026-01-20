@@ -195,9 +195,9 @@ class FactChecker:
                     plot_titles=["Fact Checking Self-Attention Heatmap"],
                     save_path="attention_heat_maps/fact_check_attention_heatmap.png"
                 )
-                logger.info("Full self-attention heatmap (input+response) saved to fact_check_attention_heatmap.png")
+                logger.info("Self-attention heatmap saved to attention_heat_maps/fact_check_attention_heatmap.png")
             except Exception as e:
-                logger.error(f"Error generating full attention heatmap: {e}")
+                logger.error(f"Error generating self-attention heatmap: {e}")
 
         return response
 
