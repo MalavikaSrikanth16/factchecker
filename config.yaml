@@ -1,17 +1,20 @@
-# deployment_type: "local" to use locally hosted model, "inference_client" to use Hugging Face InferenceClient
-deployment_type: "inference_client"
+# Check README.md for detailed explanation of each configuration option.
+
+# deployment_type: "local" to use locally hosted model, "inference_client" to use Hugging Face InferenceClient 
+deployment_type: "local"
 
 # Model name 
-# For inference_client: you can use larger models available on HF Inference API (Tested with "openai/gpt-oss-120b")
+# For inference_client deployment_type: you can use larger models available on HF Inference API (eg. "openai/gpt-oss-120b")
 #                       NOTE: "HuggingFaceTB/SmolLM2-1.7B-Instruct" is NOT available via HF Inference API
-# For local: use small models that can be locally hosted (Tested with "HuggingFaceTB/SmolLM2-1.7B-Instruct")
-model: "openai/gpt-oss-120b"
+# For local deployment_type: use small models that can be locally hosted (eg. "HuggingFaceTB/SmolLM2-1.7B-Instruct")
+model: "HuggingFaceTB/SmolLM2-1.7B-Instruct"
 
 system_prompt_path: "prompts/system_prompt.txt"
 user_prompt_path: "prompts/user_prompt.txt"
 temperature: 0
 
 # wiki_agentic_rag: if true, requires deployment_type to be "inference_client"
-wiki_agentic_rag: true
-# izzyviz will only run if deployment_type is "local"
+wiki_agentic_rag: false
+
+# izzyviz will only run if deployment_type is "local" and IzzyViz (https://github.com/WING-NUS/IzzyViz) is installed 
 izzyviz: false

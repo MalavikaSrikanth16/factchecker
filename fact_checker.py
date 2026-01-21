@@ -8,8 +8,12 @@ from smolagents import CodeAgent, InferenceClientModel, WikipediaSearchTool
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from constants import *
 import torch
-from IzzyViz.izzyviz import visualize_attention_self_attention
-
+try:
+    from IzzyViz.izzyviz import visualize_attention_self_attention
+    IZZYVIZ_AVAILABLE = True
+except ImportError:
+    IZZYVIZ_AVAILABLE = False
+    
 logger = logging.getLogger(__name__)
 
 class FactChecker:
@@ -152,6 +156,10 @@ class FactChecker:
         Args:
             text_to_visualize (str): The text to visualize
         """
+        if not IZZYVIZ_AVAILABLE:
+            logger.warning("IzzyViz is not installed. Skipping self-attention heatmap generation.")
+            return
+        
         try:
             inputs = self.loaded_tokenizer(text_to_visualize, return_tensors="pt", add_special_tokens=True)
             tokens = self.loaded_tokenizer.convert_ids_to_tokens(inputs['input_ids'][0])
