@@ -5,8 +5,8 @@ deployment_type: "local"
 
 # Model name 
 # For inference_client deployment_type: you can use larger models available on HF Inference API (eg. "openai/gpt-oss-120b")
-#                       NOTE: "HuggingFaceTB/SmolLM2-1.7B-Instruct" is NOT available via HF Inference API
-# For local deployment_type: use small models that can be locally hosted (eg. "HuggingFaceTB/SmolLM2-1.7B-Instruct")
+# For local deployment_type: use small models that can be locally hosted. (eg. "HuggingFaceTB/SmolLM2-1.7B-Instruct")
+# NOTE: Only HuggingFace chat models are supported for local deployment_type currently. 
 model: "HuggingFaceTB/SmolLM2-1.7B-Instruct"
 
 system_prompt_path: "prompts/system_prompt.txt"

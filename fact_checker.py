@@ -63,7 +63,6 @@ class FactChecker:
         self.agent = None
         if self.wiki_agentic_rag:
             logger.info(f"Initializing CodeAgent with Wikipedia search tool")
-            #TODO : These options should be read from config
             wiki_tool = WikipediaSearchTool(
                 user_agent="FactChecker/1.0 (fact-checking-tool)",
                 language="en",
@@ -168,7 +167,6 @@ class FactChecker:
             with torch.no_grad():
                 outputs = self.loaded_model(**inputs, output_attentions=True)
                 attentions = outputs.attentions   
-            #TODO : These options should be read from config
             visualize_attention_self_attention(
                 attentions=attentions,
                 tokens=tokens,
@@ -191,7 +189,7 @@ class FactChecker:
             messages (list): The list of messages to be sent to the LLM
             
         Returns:
-            str: The LLM response or None if there is an error.
+            str: The LLM response.
         """
         logger.info(f"Calling HF InferenceClient LLM: {self.model} with messages: {messages}")
         completion = self.client.chat.completions.create(
@@ -210,7 +208,7 @@ class FactChecker:
             messages (list): The list of messages to be sent to the LLM
             
         Returns:
-            str: The LLM response or None if there is an error.
+            str: The LLM response.
         """
         logger.info(f"Calling locally hosted LLM model: {self.model} with messages: {messages}")
         inputs = self.loaded_tokenizer.apply_chat_template(

@@ -1,10 +1,10 @@
 # Fact Checker
 
-A Streamlit-based fact-checking application that uses Large Language Models (LLMs) to fact-check texts and provide reasoning. The application supports both locally hosted LLMs and using LLMs via the Hugging Face Inference API. The application supports optional agentic RAG capabilities using Wikipedia search.
+A Streamlit-based fact-checking application that uses Large Language Models (LLMs) to fact-check texts and provide reasoning. The application supports both locally hosted LLMs and using LLMs via the Hugging Face Inference Client. The application supports optional agentic RAG capabilities using Wikipedia search.
 
 ## Features
 
-- **Multiple LLM Access Options**: Use locally hosted LLMs or LLMs via Hugging Face Inference API
+- **Multiple LLM Access Options**: Use locally hosted LLMs or LLMs via [Hugging Face Inference Client](https://huggingface.co/docs/huggingface_hub/main/en/package_reference/inference_client#huggingface_hub.InferenceClient)
 - **Agentic RAG**: Optional agentic RAG with wikipedia search integration 
 - **Configurable Prompts**: Customize system and user prompts via text files
 - **Interactive UI**: Clean Streamlit interface for easy fact-checking
@@ -22,7 +22,7 @@ cd factchecker
 pip install -r requirements.txt
 ```
 
-3. <a id="huggingface-auth"></a>[Required if using LLMs via Hugging Face Inference API or Agentic RAG] Set up huggingface authentication :
+3. <a id="huggingface-auth"></a>[Required if using LLMs via Hugging Face Inference Client or Agentic RAG] Set up huggingface authentication :
    - Get your Hugging Face token from [Hugging Face Access Tokens](https://huggingface.co/settings/tokens).
    - Create a `.streamlit/secrets.toml` file (if it doesn't exist)
    - Add your Hugging Face token to the file:
@@ -52,7 +52,7 @@ The application is configured via `config.yaml`. Here's a detailed explanation o
 
 Determines how the LLM is accessed:
 
-- `"inference_client"`: Uses LLMs via Hugging Face Inference API. Suitable for larger models that can't run locally. **[Requires setting up Hugging Face Authentication](#huggingface-auth).** 
+- `"inference_client"`: Uses LLMs via [Hugging Face Inference Client](https://huggingface.co/docs/huggingface_hub/main/en/package_reference/inference_client#huggingface_hub.InferenceClient). Suitable for larger models that can't run locally. **[Requires setting up Hugging Face Authentication](#huggingface-auth).** 
 - `"local"`: Uses a locally hosted LLM. Suitable for smaller models.
 
 ### model
@@ -62,10 +62,10 @@ Determines how the LLM is accessed:
 
 The model identifier to use for fact-checking:
 
-- For `inference_client` deployment_type : Use LLMs available on Hugging Face Inference API. Example: `"openai/gpt-oss-120b"` 
+- For `inference_client` deployment_type : Use LLMs available on [Hugging Face Inference Client](https://huggingface.co/docs/huggingface_hub/main/en/package_reference/inference_client#huggingface_hub.InferenceClient). Example: `"openai/gpt-oss-120b"` 
 - For `local`: Use smaller LLMs that can be loaded locally and are compatible with the HuggingFace Transformers library. Example: `"HuggingFaceTB/SmolLM2-1.7B-Instruct"` 
 
-  **Note**: `"HuggingFaceTB/SmolLM2-1.7B-Instruct"` is NOT available via Hugging Face Inference API.
+  **Note**: Only [Hugging Face chat models](https://huggingface.co/docs/transformers/en/conversations) are supported currently with local deployment_type.
 
 ### system_prompt_path
 
