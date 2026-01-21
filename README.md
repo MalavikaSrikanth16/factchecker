@@ -172,6 +172,7 @@ factchecker/
 │   └── user_prompt.txt      # User prompt template
 ├── tests/                   # Test suite
 │   ├── __init__.py
+│   ├── test_fact_checker_unit.py         # Unit tests
 │   ├── test_fact_checker_integration.py  # Integration tests
 ├── attention_heat_maps/     # Generated attention heatmap visualizations
 ├── .streamlit/
@@ -191,20 +192,42 @@ factchecker/
 
 ## Testing
 
-The project includes integration tests to ensure the fact-checking functionality works correctly.
+The project includes both unit tests and integration tests to ensure the fact-checking functionality works correctly.
 
 ### Running Tests
 
-To run integration tests:
+To run all tests:
+```bash
+pytest tests/
+```
+
+To run only unit tests:
+```bash
+pytest tests/test_fact_checker_unit.py
+```
+
+To run only integration tests:
 ```bash
 pytest tests/test_fact_checker_integration.py
 ```
+
+### Unit Tests
+
+The unit tests in `test_fact_checker_unit.py` test individual components and methods of the `FactChecker` class:
+
+1. **`TestLoadConfig`**: Tests the configuration loading functionality
+
+2. **`TestLoadPromptTemplate`**: Tests the prompt template loading functionality
+
+3. **`TestFactCheckerInitialization`**: Tests the `FactChecker` initialization with different configurations
+
+4. **`TestParseResponse`**: Tests the response parsing functionality
 
 ### Integration Tests
 
 The integration tests in `test_fact_checker_integration.py` test the fact-checking flow:
 
-1. **`test_check_fact_with_inference_client`**: Tests the full fact-checking flow using the Hugging Face Inference API client. 
+1. **`test_check_fact_with_inference_client`**: Tests the fact-checking flow using the Hugging Face Inference API client. 
 
 2. **`test_check_fact_with_local_model`**: Tests the fact-checking flow using a locally hosted model. 
 
