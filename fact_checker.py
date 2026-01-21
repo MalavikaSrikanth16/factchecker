@@ -300,8 +300,8 @@ class FactChecker:
             json_str = match.group(1).strip()
             json_data = json.loads(json_str)
             return {
-                "is_fact_true": json_data.get(LLM_RESPONSE_KEY_IS_FACT_TRUE),
-                "reasoning": json_data.get(LLM_RESPONSE_KEY_REASONING)
+                "is_fact_true": json_data[LLM_RESPONSE_KEY_IS_FACT_TRUE],
+                "reasoning": json_data[LLM_RESPONSE_KEY_REASONING]
             }
         except Exception as e:
             logger.warning(f"Failed to parse with <response> tags, trying without tags: {e}")
@@ -311,13 +311,13 @@ class FactChecker:
             if isinstance(llm_response, str):
                 json_data = json.loads(llm_response.strip())
                 return {
-                    "is_fact_true": json_data.get(LLM_RESPONSE_KEY_IS_FACT_TRUE),
-                    "reasoning": json_data.get(LLM_RESPONSE_KEY_REASONING)
+                    "is_fact_true": json_data[LLM_RESPONSE_KEY_IS_FACT_TRUE],
+                    "reasoning": json_data[LLM_RESPONSE_KEY_REASONING]
                 }   
             elif isinstance(llm_response, dict):
                 return {
-                    "is_fact_true": llm_response.get(LLM_RESPONSE_KEY_IS_FACT_TRUE),
-                    "reasoning": llm_response.get(LLM_RESPONSE_KEY_REASONING)
+                    "is_fact_true": llm_response[LLM_RESPONSE_KEY_IS_FACT_TRUE],
+                    "reasoning": llm_response[LLM_RESPONSE_KEY_REASONING]
                 }
             else:
                 logger.error(f"Error parsing LLM response: Unsupported response type: {type(llm_response)}")

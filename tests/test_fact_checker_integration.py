@@ -148,6 +148,7 @@ class TestCheckFactIntegration:
         assert result is not None
         assert result["is_fact_true"] is False
         assert result["reasoning"] == "This fact is incorrect"
+        mock_model_class.from_pretrained.assert_called_once()
     
     @patch('fact_checker.FactChecker.load_config')
     @patch('fact_checker.FactChecker.load_prompt_template')
