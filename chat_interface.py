@@ -36,7 +36,7 @@ def authenticate_huggingface() -> None:
     # Get HF_TOKEN from Streamlit secrets first, then environment variables
     try:
         hf_token = st.secrets[HUGGINGFACE_TOKEN]
-    except (KeyError, AttributeError):
+    except Exception as e:
         hf_token = os.getenv(HUGGINGFACE_TOKEN)
         if not hf_token:
             error_msg = f"{HUGGINGFACE_TOKEN} is missing from both secrets.toml and environment variables!"
