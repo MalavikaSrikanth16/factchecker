@@ -20,7 +20,7 @@ class FactChecker:
         Args:
             config_path (str): Path to the config YAML file. Defaults to "config.yaml".
         """
-        config = self.load_config(config_path)
+        config = FactChecker.load_config(config_path)
         self.wiki_agentic_rag = config.get(CONFIG_KEY_WIKI_AGENTIC_RAG, False)
         self.deployment_type = config.get(CONFIG_KEY_DEPLOYMENT_TYPE, CONFIG_INFERENCE_CLIENT_DEPLOYMENT_TYPE)
         # If wiki_agentic_rag is enabled, deployment_type must be "inference_client" 
@@ -29,10 +29,10 @@ class FactChecker:
             self.deployment_type = CONFIG_INFERENCE_CLIENT_DEPLOYMENT_TYPE
         self.model = config.get(CONFIG_KEY_MODEL, FALLBACK_MODEL)
         self.temperature = config.get(CONFIG_KEY_TEMPERATURE, 0)
-        self.system_prompt = self.load_prompt_template(
+        self.system_prompt = FactChecker.load_prompt_template(
             config.get(CONFIG_KEY_SYSTEM_PROMPT_PATH, FALLBACK_SYSTEM_PROMPT_PATH)
         )
-        self.user_prompt = self.load_prompt_template(
+        self.user_prompt = FactChecker.load_prompt_template(
             config.get(CONFIG_KEY_USER_PROMPT_PATH, FALLBACK_USER_PROMPT_PATH)
         )
         self.izzyviz = config.get(CONFIG_KEY_IZZYVIZ, False)
