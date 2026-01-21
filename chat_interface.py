@@ -18,8 +18,13 @@ st.set_page_config(layout="wide", page_title="Fact Check App")
 st.title("Fact Checker")
 
 
+@st.cache_resource
 def authenticate_huggingface() -> None:
-    """Authenticate with Hugging Face Hub if required by the configuration."""
+    """Authenticate and Login to Hugging Face Hub if required based on the configuration.
+    
+    This function is cached using st.cache_resource to ensure authentication
+    only happens once. (until app restart)
+    """
     config = FactChecker.load_config(CONFIG_PATH)
     deployment_type = config.get(CONFIG_KEY_DEPLOYMENT_TYPE, CONFIG_INFERENCE_CLIENT_DEPLOYMENT_TYPE)
     wiki_agentic_rag = config.get(CONFIG_KEY_WIKI_AGENTIC_RAG, False)
@@ -49,8 +54,14 @@ def authenticate_huggingface() -> None:
         st.error(error_msg)
         st.stop()
 
+@st.cache_resource
 def initialize_fact_checker() -> FactChecker:
-    """Initialize and return the FactChecker instance."""
+    """Initialize and return the FactChecker instance.
+    
+    This function is cached using st.cache_resource to ensure the LLM within FactChecker
+    is loaded only once. (until app restart)
+    """
+    logger.info(f"Initializing FactChecker")
     try:
         return FactChecker(config_path=CONFIG_PATH)
     except Exception as e:
