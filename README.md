@@ -22,7 +22,7 @@ cd factchecker
 pip install -r requirements.txt
 ```
 
-3. <a id="huggingface-auth"></a>[Required if using LLMs via Hugging Face Inference Client or Agentic RAG] Set up huggingface authentication :
+3. <a id="huggingface-auth"></a>[Required if using LLMs via Hugging Face Inference Client or Agentic RAG. See [Setting the Configuration](#configuration)] Set up huggingface authentication :
    - Get your Hugging Face token from [Hugging Face Access Tokens](https://huggingface.co/settings/tokens).
    - Create a `.streamlit/secrets.toml` file (if it doesn't exist)
    - Add your Hugging Face token to the file:
@@ -31,7 +31,7 @@ pip install -r requirements.txt
     ```
     - Alternatively, you can set the `HF_TOKEN` environment variable.
     
-4. <a id="izzyviz-install"></a>[Optional] To use the `izzyviz` feature to visualize LLM self-attention heat maps, you need to install IzzyViz :
+4. <a id="izzyviz-install"></a>[Optional. See [Setting the Configuration](#configuration)] To use the `izzyviz` feature to visualize LLM self-attention heat maps, you need to install IzzyViz :
 
 - Install from GitHub
 ```bash
@@ -40,7 +40,7 @@ cd IzzyViz
 pip install -e .
 ```
 
-## Setting the Configuration
+<a id="configuration"></a>## Setting the Configuration
 
 The application is configured via `config.yaml`. Here's a detailed explanation of how to set each option:
 
