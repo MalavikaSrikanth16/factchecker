@@ -1,8 +1,10 @@
 import streamlit as st
 import logging
 import os
+from typing import Dict, Any, Optional
 from fact_checker import FactChecker
 from huggingface_hub import login
+from constants import *
 
 # Setup logging
 logging.basicConfig(
@@ -16,23 +18,23 @@ st.set_page_config(layout="wide", page_title="Fact Check App")
 st.title("Fact Checker")
 
 
-def authenticate_huggingface():
+def authenticate_huggingface() -> None:
     """Authenticate with Hugging Face Hub if required by the configuration."""
-    config = FactChecker._load_config("config.yaml")
-    deployment_type = config.get("deployment_type", "inference_client")
-    wiki_agentic_rag = config.get("wiki_agentic_rag", False)
-    needs_auth = deployment_type == "inference_client" or wiki_agentic_rag
+    config = FactChecker.load_config(CONFIG_PATH)
+    deployment_type = config.get(CONFIG_KEY_DEPLOYMENT_TYPE, CONFIG_INFERENCE_CLIENT_DEPLOYMENT_TYPE)
+    wiki_agentic_rag = config.get(CONFIG_KEY_WIKI_AGENTIC_RAG, False)
+    needs_auth = deployment_type == CONFIG_INFERENCE_CLIENT_DEPLOYMENT_TYPE or wiki_agentic_rag
 
     if not needs_auth:
         return
 
     # Get HF_TOKEN from Streamlit secrets first, then environment variables
     try:
-        hf_token = st.secrets["HF_TOKEN"]
+        hf_token = st.secrets[HUGGINGFACE_TOKEN]
     except (KeyError, AttributeError):
-        hf_token = os.getenv("HF_TOKEN")
+        hf_token = os.getenv(HUGGINGFACE_TOKEN)
         if not hf_token:
-            error_msg = "HF_TOKEN is missing from both secrets.toml and environment variables!"
+            error_msg = f"{HUGGINGFACE_TOKEN} is missing from both secrets.toml and environment variables!"
             logger.error(error_msg)
             st.error(error_msg)
             st.stop()
@@ -47,17 +49,17 @@ def authenticate_huggingface():
         st.error(error_msg)
         st.stop()
 
-def initialize_fact_checker():
+def initialize_fact_checker() -> FactChecker:
     """Initialize and return the FactChecker instance."""
     try:
-        return FactChecker(config_path="config.yaml")
+        return FactChecker(config_path=CONFIG_PATH)
     except Exception as e:
         error_msg = f"Error loading FactChecker: {e}"
         logger.error(error_msg)
         st.error(error_msg)
         st.stop()
 
-def display_fact_check_result(result):
+def display_fact_check_result(result: Optional[Dict[str, Any]]) -> None:
     """Display the fact check result in a structured manner."""
     if not result:
         st.error("**No fact check result found**")
@@ -74,7 +76,7 @@ def display_fact_check_result(result):
     with st.expander("View Reasoning", expanded=True):
         st.markdown(f"*{result['reasoning']}*")
 
-# Initialize application
+# Authenticate Hugging Face if needed and initialize FactChecker
 authenticate_huggingface()
 fact_checker = initialize_fact_checker()
 
@@ -85,7 +87,7 @@ fact_check_input = st.text_area(
     placeholder="e.g., The moon is made of cheese."
 )
 
-# Process fact check request
+# Process fact check request when user clicks the button
 if st.button("Check Fact"):
     if not fact_check_input:
         st.warning("Please enter a text to be fact checked.")
