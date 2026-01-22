@@ -1,6 +1,6 @@
 # Fact Checker
 
-A Streamlit-based fact-checking application that uses Large Language Models (LLMs) to fact-check texts and provide reasoning. The application supports both locally hosted LLMs and using LLMs via the Hugging Face Inference Client. The application supports optional agentic RAG capabilities using Wikipedia search.
+A Streamlit-based fact-checking application that uses Large Language Models (LLMs) to fact-check texts and provide reasoning. The application supports both locally hosted LLMs and using (typically larger) LLMs via the Hugging Face Inference Client. The application supports optional agentic RAG capabilities using Wikipedia search.
 
 ## Features
 
